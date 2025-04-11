@@ -1,30 +1,4 @@
-name: alu-student-companion
-
-services:
-  # Backend service with memory optimization
-  - type: web
-    name: alu-companion-api
-    runtime: python
-    pythonVersion: 3.10
-    region: ohio
-    plan: free
-    buildCommand: pip install -r backend/requirements-deploy.txt
-    startCommand: bash backend/start-backend.sh
-    envVars:
-      - key: PORT
-        value: 10000
-      - key: PYTHONPATH
-        value: .
-      - key: APP_MODULE 
-        value: backend.main_lightweight:app
-      - key: ENVIRONMENT
-        value: production
-      - key: USE_LIGHTWEIGHT_MODE
-        value: "True"
-      - key: DISABLE_LARGE_MODELS
-        value: "True"
-      
-  # Frontend service - separated to reduce memory pressure
+# Frontend service - separated to reduce memory pressure
   - type: web
     name: alu-companion
     runtime: node
@@ -37,4 +11,4 @@ services:
       - key: PORT
         value: 3000
       - key: VITE_API_URL
-        value: https://alu-companion-api.onrender.com
+        value: https://alu-student-batoo-18uu.onrender.com
