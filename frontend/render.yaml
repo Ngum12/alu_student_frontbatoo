@@ -11,4 +11,4 @@
       - key: PORT
         value: 3000
       - key: VITE_API_URL
-        value: https://alu-student-batoo-18uu.onrender.com
+        value: https://ngum-alu-chatbot.hf.space
