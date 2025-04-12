@@ -5,8 +5,9 @@ import type {
   ToastProps,
 } from "@/components/ui/toast"
 
-const TOAST_LIMIT = 1
-const TOAST_REMOVE_DELAY = 1000000
+// Change these configuration values for better UX
+const TOAST_LIMIT = 5       // Increased from 1 - allow more toasts
+const TOAST_REMOVE_DELAY = 5000  // Changed from 1000000 (16+ minutes!) to 5 seconds
 
 type ToasterToast = ToastProps & {
   id: string
@@ -55,7 +56,7 @@ interface State {
 
 const toastTimeouts = new Map<string, ReturnType<typeof setTimeout>>()
 
-const addToRemoveQueue = (toastId: string) => {
+const addToRemoveQueue = (toastId: string, customRemoveDelay?: number) => {
   if (toastTimeouts.has(toastId)) {
     return
   }
@@ -66,7 +67,7 @@ const addToRemoveQueue = (toastId: string) => {
       type: "REMOVE_TOAST",
       toastId: toastId,
     })
-  }, TOAST_REMOVE_DELAY)
+  }, customRemoveDelay ?? TOAST_REMOVE_DELAY)
 
   toastTimeouts.set(toastId, timeout)
 }
@@ -139,8 +140,11 @@ function dispatch(action: Action) {
 
 type Toast = Omit<ToasterToast, "id">
 
-function toast({ ...props }: Toast) {
+function toast({ duration = 5000, ...props }: Toast & { duration?: number }) {
   const id = genId()
+
+  // Use custom duration for this specific toast
+  const customRemoveDelay = duration
 
   const update = (props: ToasterToast) =>
     dispatch({
@@ -161,12 +165,27 @@ function toast({ ...props }: Toast) {
     },
   })
 
+  addToRemoveQueue(id, customRemoveDelay)
+
   return {
     id: id,
     dismiss,
     update,
   }
 }
+
+// Add these to your toast function
+toast.error = (props: Omit<Toast, "variant">) => 
+  toast({ ...props, variant: "destructive" });
+
+toast.success = (props: Omit<Toast, "variant">) => 
+  toast({ ...props, variant: "success" });
+
+toast.warning = (props: Omit<Toast, "variant">) => 
+  toast({ ...props, variant: "warning" });
+
+toast.info = (props: Omit<Toast, "variant">) => 
+  toast({ ...props });
 
 function useToast() {
   const [state, setState] = React.useState<State>(memoryState)

@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useRef } from "react";
 import { toast } from "sonner";
 import { Brain, Server } from "lucide-react";
@@ -20,8 +19,8 @@ export const BackendStatus = () => {
     // Local development mode
     if (useLocalBackend) return "http://localhost:8000";
     
-    // Production deployment URL
-    return "https://alu-chatbot-backend.onrender.com";
+    // Production deployment URL - UPDATE THIS LINE
+    return "https://ngum-alu-chatbot.hf.space";
   };
 
   useEffect(() => {

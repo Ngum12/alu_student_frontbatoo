@@ -1,11 +1,11 @@
 // This file contains the AI service that interacts with the backend
 import { Message } from "@/types/chat";
 
-// Example configuration in frontend:
+// Make sure environment variable is set to Hugging Face URL
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
 
-// Update this to use /api/chat
-const CHAT_ENDPOINT = `${API_URL}/api/chat`;
+// Update to match your Hugging Face API endpoint
+const CHAT_ENDPOINT = `${API_URL}/api/chat`;  // Changed from /chat to /api/chat
 
 /**
  * Service for interacting with the AI backend
@@ -63,12 +63,14 @@ export const aiService = {
     }
 
     try {
-      const response = await fetch(`${API_URL}/health`, {
+      // Hugging Face spaces often don't have a /health endpoint
+      // Try a simple GET request to the root instead
+      const response = await fetch(`${API_URL}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
         },
-        signal: AbortSignal.timeout(2000), // 2 second timeout
+        signal: AbortSignal.timeout(5000), // Increase timeout
       });
 
       const isAvailable = response.ok;

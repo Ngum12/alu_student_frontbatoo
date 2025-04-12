@@ -346,7 +346,7 @@ export default function Settings() {
   useEffect(() => {
     const savedGeminiKey = localStorage.getItem("GEMINI_API_KEY") || "";
     const savedUseLocalBackend = localStorage.getItem("USE_LOCAL_BACKEND") === "true";
-    const savedBackendUrl = localStorage.getItem("BACKEND_URL") || "http://localhost:8000";
+    const savedBackendUrl = localStorage.getItem("BACKEND_URL") || "https://ngum-alu-chatbot.hf.space";
     const savedUserRole = localStorage.getItem("USER_ROLE") || "student";
     const savedTheme = localStorage.getItem("THEME") || "system";
     const savedFeatures = JSON.parse(localStorage.getItem("FEATURES") || "null");
@@ -446,23 +446,24 @@ export default function Settings() {
     setBackendTestResult(null);
     
     try {
-      const response = await fetch(`${backendUrl}/health`);
+      // Test the root endpoint - Hugging Face spaces often don't have /health
+      const response = await fetch(`${backendUrl}`);
       const success = response.status === 200;
       setBackendTestResult(success);
       
       if (success) {
-        toast.success("Backend connection successful", {
-          description: "The system is connected to the ALU knowledge base"
+        toast.success("Hugging Face backend connection successful", {
+          description: "The system is connected to the Hugging Face model"
         });
       } else {
         toast.error("Backend connection failed", {
-          description: "Could not connect to the specified backend URL"
+          description: "Could not connect to Hugging Face. Status: " + response.status
         });
       }
     } catch (error) {
       setBackendTestResult(false);
       toast.error("Backend connection failed", {
-        description: "Could not connect to the specified backend URL"
+        description: `Error: ${error.message}`
       });
     } finally {
       setIsTestingBackend(false);

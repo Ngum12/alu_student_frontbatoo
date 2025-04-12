@@ -7,8 +7,8 @@ export const getApiUrl = () => {
     return 'http://localhost:8080';
   }
   
-  // For Hugging Face Space - backend and frontend served from same origin
-  return '';
+  // For Hugging Face Space deployment
+  return 'https://ngum-alu-chatbot.hf.space';
 };
 
 // Base URL for API requests
@@ -41,8 +41,9 @@ export const fetchWithTimeout = async (url: string, options: RequestInit = {}, t
 // Health check function
 export const checkBackendHealth = async () => {
   try {
-    const response = await fetchWithTimeout(`${API_URL}/health`, {}, 5000);
-    return response.status === "healthy";
+    // Just check root endpoint since /health doesn't exist
+    const response = await fetchWithTimeout(`${API_URL}`, {}, 5000);
+    return response.status === 200; // Changed to check HTTP status
   } catch (error) {
     console.error("Backend health check failed:", error);
     return false;
@@ -63,7 +64,8 @@ export const generateResponse = async (message: string, history: ChatMessage[] =
     throw new Error("Backend service is currently unavailable");
   }
   
-  const response = await fetchWithTimeout(`${API_URL}/api/chat`, {
+  // Removed /api prefix based on your error logs
+  const response = await fetchWithTimeout(`${API_URL}/chat`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
