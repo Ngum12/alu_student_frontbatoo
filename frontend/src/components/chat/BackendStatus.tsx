@@ -1,15 +1,17 @@
-import { useEffect, useState, useRef } from "react";
-import { toast } from "sonner";
-import { Brain, Server } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Server } from "lucide-react";
 
+// Environment variable for local development
+const useLocalBackend = import.meta.env.DEV || false;
+
+// Check if backend is available
 export const BackendStatus = () => {
-  const [isConnected, setIsConnected] = useState(false);
+  const [isBackendAvailable, setIsBackendAvailable] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isRetrying, setIsRetrying] = useState(false);
-  const useLocalBackend = localStorage.getItem('USE_LOCAL_BACKEND') === 'true';
-  const connectionChecked = useRef(false);
-  
+  const [lastCheck, setLastCheck] = useState<Date>(new Date());
+
   // Get backend URL with efficient caching
   const getBackendUrl = () => {
     // Check if a BACKEND_URL is set in localStorage (for testing)
@@ -19,82 +21,76 @@ export const BackendStatus = () => {
     // Local development mode
     if (useLocalBackend) return "http://localhost:8000";
     
-    // Production deployment URL - UPDATE THIS LINE
+    // Production deployment URL
     return "https://ngum-alu-chatbot.hf.space";
   };
 
-  useEffect(() => {
-    // Prevent multiple connection checks on component remount
-    if (connectionChecked.current) return;
-    
-    const checkConnection = async () => {
-      try {
-        setIsLoading(true);
-        const backendUrl = getBackendUrl();
-        
-        // Use a simple GET request instead of POST for faster checking
-        const response = await fetch(`${backendUrl}/`, {
-          method: "GET",
-          // Reduced timeout for faster response
-          signal: AbortSignal.timeout(5000)
-        });
-        
-        setIsConnected(response.ok);
-        if (!response.ok) {
-          console.warn("ALU backend is not responding correctly");
-        } else {
-          // Use a less intrusive toast
-          toast.success("Connected to ALU knowledge base", { duration: 2000 });
-        }
-        connectionChecked.current = true;
-      } catch (error) {
-        console.error("Error connecting to backend:", error);
-        setIsConnected(false);
-        
-        // Only show error toast on first attempt
-        if (!isRetrying) {
-          toast.error("Could not connect to ALU backend", { duration: 3000 });
-        }
-      } finally {
-        setIsLoading(false);
-        setIsRetrying(false);
-      }
-    };
-
-    // Only check connection if backend is being used
-    if (window.location.hostname !== 'localhost' || useLocalBackend) {
-      checkConnection();
-    } else {
+  // Check backend availability
+  const checkBackendHealth = async () => {
+    try {
+      setIsLoading(true);
+      // Use a simple GET request for faster checking
+      const response = await fetch(`${getBackendUrl()}/`, {
+        method: "GET",
+        // Reduced timeout for faster response
+        signal: AbortSignal.timeout(5000)
+      });
+      
+      setIsBackendAvailable(response.status === 200);
+    } catch (error) {
+      console.error("Backend health check failed:", error);
+      setIsBackendAvailable(false);
+    } finally {
       setIsLoading(false);
+      setLastCheck(new Date());
     }
-    
-    // Set up periodic refresh in the background (every 60 seconds)
-    const intervalId = setInterval(() => {
-      if (window.location.hostname !== 'localhost' || useLocalBackend) {
-        setIsRetrying(true);
-        checkConnection();
-      }
-    }, 60000);
-    
-    return () => clearInterval(intervalId);
-  }, [useLocalBackend, isRetrying]);
+  };
 
-  // Don't show anything if not using backend - improves performance
-  if (!useLocalBackend && window.location.hostname === 'localhost') return null;
+  // Check backend on component mount and set refresh interval
+  useEffect(() => {
+    // Check immediately on mount
+    checkBackendHealth();
+    
+    // Then check again every 30 seconds
+    const intervalId = setInterval(checkBackendHealth, 30000);
+    
+    // Clean up interval on unmount
+    return () => clearInterval(intervalId);
+  }, []);
 
   return (
-    <Badge variant="outline" className="flex items-center gap-2 px-3 py-1 rounded-full bg-[#2A2F3C] text-xs">
-      {isLoading ? (
-        <Server className="h-3 w-3 animate-pulse text-yellow-500" />
-      ) : isConnected ? (
-        <Brain className="h-3 w-3 text-green-500" />
-      ) : (
-        <Server className="h-3 w-3 text-red-500" />
-      )}
-      <span>
-        {isLoading ? "Connecting..." : 
-         isConnected ? "ALU Brain: Connected" : "ALU Backend: Disconnected"}
-      </span>
-    </Badge>
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div className="flex items-center gap-2 cursor-help">
+            <Badge 
+              variant="outline" 
+              className={`
+                flex items-center gap-1.5 py-1 ${
+                  isLoading
+                    ? "bg-gray-100 text-gray-700 border-gray-300" 
+                    : isBackendAvailable
+                      ? "bg-green-50 text-green-700 border-green-200"
+                      : "bg-red-50 text-red-700 border-red-200"
+                }
+              `}
+            >
+              <Server className="h-3.5 w-3.5" />
+              {isLoading 
+                ? "Checking..." 
+                : isBackendAvailable 
+                  ? "Backend Connected" 
+                  : "Backend Offline"
+              }
+            </Badge>
+          </div>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>Backend Status: {isLoading ? "Checking..." : isBackendAvailable ? "Connected" : "Offline"}</p>
+          <p className="text-xs text-muted-foreground mt-1">Last checked: {lastCheck.toLocaleTimeString()}</p>
+          <p className="text-xs text-muted-foreground">URL: {getBackendUrl()}</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 };

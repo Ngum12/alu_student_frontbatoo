@@ -45,9 +45,11 @@ import {
   Book,
   LibrarySquare,
   Layers,
-  Info
+  Info,
+  MessageSquare,
+  ListFilter
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 // Feature access levels
 type AccessLevel = "public" | "beta" | "admin" | "developer";
@@ -341,6 +343,7 @@ export default function Settings() {
   const [userEmail, setUserEmail] = useState("");
   const [userPassword, setUserPassword] = useState("");
   const [loginError, setLoginError] = useState("");
+  const navigate = useNavigate();
 
   // Load settings from localStorage on component mount
   useEffect(() => {
@@ -1150,7 +1153,7 @@ export default function Settings() {
                       <div className="space-y-4 mt-6">
                         <h3 className="text-base font-medium">Development Tools</h3>
                         
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                           <div className="border rounded-md p-4">
                             <h4 className="font-medium mb-2">API Console</h4>
                             <p className="text-sm text-muted-foreground mb-3">
@@ -1170,6 +1173,21 @@ export default function Settings() {
                             <Button variant="outline" className="gap-2 w-full">
                               <PlayCircle className="h-4 w-4" />
                               Open Prompt Lab
+                            </Button>
+                          </div>
+
+                          <div className="border rounded-md p-4">
+                            <h4 className="font-medium mb-2">API Documentation</h4>
+                            <p className="text-sm text-muted-foreground mb-3">
+                              Comprehensive API reference for developers
+                            </p>
+                            <Button 
+                              variant="outline" 
+                              className="gap-2 w-full"
+                              onClick={() => navigate("/admin/api-docs")}
+                            >
+                              <FileText className="h-4 w-4" />
+                              View API Documentation
                             </Button>
                           </div>
                         </div>
@@ -1277,7 +1295,11 @@ export default function Settings() {
                           </div>
                           
                           <div className="mt-4 text-center">
-                            <Button variant="outline" className="gap-2">
+                            <Button 
+                              variant="outline" 
+                              className="gap-2"
+                              onClick={() => navigate("/admin/analytics")}
+                            >
                               <BarChart4 className="h-4 w-4" />
                               View Detailed Analytics
                             </Button>
@@ -1318,6 +1340,88 @@ export default function Settings() {
                                   <h4 className="font-medium">Scheduled Reports</h4>
                                   <p className="text-sm text-muted-foreground">Weekly system performance emails</p>
                                 </div>
+                              </div>
+                              <Switch defaultChecked={false} />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </SettingsSection>
+
+                    <SettingsSection
+                      title="Feedback Management"
+                      description="Review user feedback and improve the AI assistant"
+                      icon={<MessageSquare className="h-5 w-5" />}
+                    >
+                      <div className="space-y-6">
+                        <div className="border rounded-md p-5 bg-[#0F4C81]/5 border-[#0F4C81]/20">
+                          <h3 className="text-base font-medium mb-4 text-[#0F4C81]">Recent Feedback</h3>
+                          <div className="space-y-3">
+                            <div className="bg-background p-4 rounded-md border border-[#0F4C81]/20">
+                              <div className="flex justify-between items-start">
+                                <div>
+                                  <div className="font-medium">Response Quality</div>
+                                  <p className="text-sm text-muted-foreground mt-1">
+                                    "The assistant provided accurate information about campus locations."
+                                  </p>
+                                </div>
+                                <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                                  Positive
+                                </Badge>
+                              </div>
+                            </div>
+                            
+                            <div className="bg-background p-4 rounded-md border border-[#0F4C81]/20">
+                              <div className="flex justify-between items-start">
+                                <div>
+                                  <div className="font-medium">Question Handling</div>
+                                  <p className="text-sm text-muted-foreground mt-1">
+                                    "The AI didn't understand my question about transfer credits."
+                                  </p>
+                                </div>
+                                <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
+                                  Negative
+                                </Badge>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="mt-4 text-center">
+                            <Button 
+                              variant="outline" 
+                              className="gap-2"
+                              onClick={() => navigate("/admin/feedback")}
+                            >
+                              <ListFilter className="h-4 w-4" />
+                              View All Feedback
+                            </Button>
+                          </div>
+                        </div>
+                        
+                        <div className="space-y-4">
+                          <h3 className="text-base font-medium">Feedback Settings</h3>
+                          
+                          <div className="space-y-3">
+                            <div className="flex items-center justify-between border p-3 rounded-md">
+                              <div>
+                                <h4 className="font-medium">Collect User Feedback</h4>
+                                <p className="text-sm text-muted-foreground">Show feedback buttons after AI responses</p>
+                              </div>
+                              <Switch defaultChecked={true} />
+                            </div>
+                            
+                            <div className="flex items-center justify-between border p-3 rounded-md">
+                              <div>
+                                <h4 className="font-medium">Request Details for Negative Feedback</h4>
+                                <p className="text-sm text-muted-foreground">Ask for more information when users report issues</p>
+                              </div>
+                              <Switch defaultChecked={true} />
+                            </div>
+                            
+                            <div className="flex items-center justify-between border p-3 rounded-md">
+                              <div>
+                                <h4 className="font-medium">Weekly Feedback Reports</h4>
+                                <p className="text-sm text-muted-foreground">Receive email summaries of user feedback</p>
                               </div>
                               <Switch defaultChecked={false} />
                             </div>
