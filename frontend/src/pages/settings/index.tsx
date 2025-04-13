@@ -47,7 +47,9 @@ import {
   Layers,
   Info,
   MessageSquare,
-  ListFilter
+  ListFilter,
+  Loader2,
+  CheckCircle2
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 
@@ -525,6 +527,44 @@ export default function Settings() {
     }
   };
 
+  // Add this state for tracking auto-save
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Add auto-save effect
+  useEffect(() => {
+    const saveTimer = setTimeout(() => {
+      saveAllSettings();
+    }, 2000); // 2 second delay after changes
+    
+    return () => clearTimeout(saveTimer);
+  }, [modelParameters, knowledgeSources, features]);
+
+  // Consolidated save function
+  const saveAllSettings = () => {
+    try {
+      setIsSaving(true);
+      
+      // Save all settings
+      localStorage.setItem('MODEL_PARAMETERS', JSON.stringify(modelParameters));
+      localStorage.setItem('KNOWLEDGE_SOURCES', JSON.stringify(knowledgeSources));
+      localStorage.setItem('FEATURES', JSON.stringify(features));
+      
+      // Save other settings as needed
+      
+      setLastSaved(new Date());
+      setIsSaving(false);
+    } catch (error) {
+      console.error("Error saving settings:", error);
+      setIsSaving(false);
+      toast({
+        title: "Error saving settings",
+        description: "There was a problem saving your preferences",
+        variant: "destructive"
+      });
+    }
+  };
+
   // Load settings from localStorage on component mount
   useEffect(() => {
     const savedGeminiKey = localStorage.getItem("GEMINI_API_KEY") || "";
@@ -570,38 +610,6 @@ export default function Settings() {
     };
     setPerformanceMetrics(simulatedMetrics);
   }, [userEmail]);
-
-  // Save settings to localStorage
-  const saveSettings = () => {
-    // For admin-only features, verify admin status
-    const adminFeatures = features.filter(f => 
-      (f.access === "admin" || f.access === "developer")
-    );
-    
-    // Check if non-admin is trying to enable admin features
-    if (!isAdminUser() && adminFeatures.some(f => f.enabled)) {
-      toast({
-        title: "Unauthorized changes detected",
-        description: "Some settings require administrator privileges",
-        variant: "destructive"
-      });
-      
-      // Revert admin features to their previous state
-      // This would require tracking the original state
-      return;
-    }
-    
-    // If we get here, proceed with saving
-    localStorage.setItem('FEATURES', JSON.stringify(features));
-    localStorage.setItem('KNOWLEDGE_SOURCES', JSON.stringify(knowledgeSources));
-    
-    // Save other settings...
-    
-    toast({
-      title: "Settings saved",
-      description: "Your configuration has been updated successfully",
-    });
-  };
 
   // Toggle backend connection
   const toggleUseLocalBackend = (checked: boolean) => {
@@ -755,9 +763,20 @@ export default function Settings() {
         <div className="flex flex-col gap-6">
           <div className="flex items-center justify-between">
             <h1 className="text-3xl font-bold text-[#0F4C81]">System Configuration</h1>
-            <div>
+            <div className="flex items-center gap-3">
+              {isSaving ? (
+                <span className="text-muted-foreground text-sm flex items-center">
+                  <Loader2 className="h-3 w-3 mr-2 animate-spin" />
+                  Saving...
+                </span>
+              ) : lastSaved ? (
+                <span className="text-muted-foreground text-sm flex items-center">
+                  <CheckCircle2 className="h-3 w-3 mr-2 text-green-500" />
+                  Saved {lastSaved.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                </span>
+              ) : null}
               <Button 
-                onClick={saveSettings} 
+                onClick={saveAllSettings} 
                 className="gap-2 bg-[#0F4C81] hover:bg-[#0F4C81]/90 text-white"
               >
                 <Save size={16} />

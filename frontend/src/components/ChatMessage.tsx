@@ -357,52 +357,44 @@ export const ChatMessage = ({
           
           {isAi && (
             <div className="flex items-center justify-end gap-2 mt-2">
-              <span className="text-xs text-gray-400">Was this helpful?</span>
+              <span className="text-xs text-muted-foreground">Was this helpful?</span>
               <button 
-                className="p-1 rounded hover:bg-green-500/20 text-green-400"
+                className="p-1 rounded hover:bg-green-500/20 text-green-600"
                 onClick={() => {
                   try {
-                    console.log("Submitting positive feedback");
-                    // Simple feedback storage
+                    // Store in localStorage
                     const feedback = JSON.parse(localStorage.getItem('FEEDBACK') || '[]');
-                    const newFeedback = {
+                    feedback.push({
                       id: Date.now().toString(),
                       type: 'positive',
-                      message: message,
+                      message,
                       timestamp: new Date().toISOString()
-                    };
-                    feedback.push(newFeedback);
+                    });
                     localStorage.setItem('FEEDBACK', JSON.stringify(feedback));
-                    console.log("Feedback saved:", newFeedback);
-                    alert("Thank you for your positive feedback!");
+                    alert("Thank you for your feedback!");
                   } catch (error) {
                     console.error("Error saving feedback:", error);
-                    alert("Could not save feedback. Please try again.");
                   }
                 }}
               >
                 <ThumbsUp className="h-4 w-4" />
               </button>
               <button 
-                className="p-1 rounded hover:bg-red-500/20 text-red-400"
+                className="p-1 rounded hover:bg-red-500/20 text-red-600"
                 onClick={() => {
                   try {
-                    console.log("Submitting negative feedback");
-                    // Simple feedback storage
+                    // Store in localStorage
                     const feedback = JSON.parse(localStorage.getItem('FEEDBACK') || '[]');
-                    const newFeedback = {
+                    feedback.push({
                       id: Date.now().toString(),
                       type: 'negative',
-                      message: message,
+                      message,
                       timestamp: new Date().toISOString()
-                    };
-                    feedback.push(newFeedback);
+                    });
                     localStorage.setItem('FEEDBACK', JSON.stringify(feedback));
-                    console.log("Feedback saved:", newFeedback);
-                    alert("Thank you for your feedback. We'll work to improve this response.");
+                    alert("Thank you for your feedback!");
                   } catch (error) {
                     console.error("Error saving feedback:", error);
-                    alert("Could not save feedback. Please try again.");
                   }
                 }}
               >
