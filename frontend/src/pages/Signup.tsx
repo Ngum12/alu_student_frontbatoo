@@ -396,7 +396,7 @@ export default function Signup() {
           <div className="flex items-center space-x-6 mb-3 md:mb-0">
             <div className="flex items-center">
               <MapPin className="h-3 w-3 mr-1.5" />
-              <span>Kigali & Lagos Campuses</span>
+              <span>Kigali / Rwanda Campuses</span>
             </div>
             <div className="flex items-center">
               <Globe className="h-3 w-3 mr-1.5" />
