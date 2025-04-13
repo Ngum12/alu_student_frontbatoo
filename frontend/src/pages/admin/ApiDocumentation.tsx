@@ -1,10 +1,9 @@
-import { requireAdmin } from "@/utils/adminAuth";
 import { Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
-const ApiDocumentation = () => {
+export default function ApiDocumentation() {
   return (
     <div className="container mx-auto p-6">
       <div className="flex items-center mb-8">
@@ -269,6 +268,5 @@ const ApiDocumentation = () => {
       </Tabs>
     </div>
   );
-};
+}
 
-export default requireAdmin(ApiDocumentation);

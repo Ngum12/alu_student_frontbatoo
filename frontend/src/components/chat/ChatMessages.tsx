@@ -1,4 +1,3 @@
-
 import { Message } from "@/types/chat";
 import { ChatMessage } from "../ChatMessage";
 import { Loader, Bot, Stars } from "lucide-react";
@@ -19,6 +18,26 @@ export const ChatMessages = ({ messages, isLoading, onEditMessage, activeModel =
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isLoading]);
+
+  const handleFeedback = (messageId: string, type: 'positive' | 'negative', details?: string) => {
+    // Store in localStorage
+    const feedback = JSON.parse(localStorage.getItem('FEEDBACK') || '[]');
+    const messageData = messages.find(m => m.id === messageId);
+    
+    feedback.push({
+      id: crypto.randomUUID(),
+      type,
+      userQuery: messages.find(m => !m.isAi && messages.indexOf(m) < messages.indexOf(messageData))?.text || "",
+      message: messageData?.text || "",
+      details,
+      timestamp: new Date().toISOString()
+    });
+    
+    localStorage.setItem('FEEDBACK', JSON.stringify(feedback));
+    
+    // You could also update the message to show feedback was given
+    // onEditMessage(messageId, messageData.text, { feedbackGiven: true });
+  };
 
   if (messages.length === 0) {
     return (
@@ -66,6 +85,7 @@ export const ChatMessages = ({ messages, isLoading, onEditMessage, activeModel =
           isAi={message.isAi}
           attachments={message.attachments}
           onEdit={(newText) => onEditMessage(message.id, newText)}
+          onFeedback={(type, details) => handleFeedback(message.id, type, details)}
         />
       ))}
       {isLoading && (

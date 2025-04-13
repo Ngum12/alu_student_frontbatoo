@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Server } from "lucide-react";
@@ -26,7 +26,7 @@ export const BackendStatus = () => {
   };
 
   // Check backend availability
-  const checkBackendHealth = async () => {
+  const checkBackendHealth = useCallback(async () => {
     try {
       setIsLoading(true);
       // Use a simple GET request for faster checking
@@ -44,7 +44,7 @@ export const BackendStatus = () => {
       setIsLoading(false);
       setLastCheck(new Date());
     }
-  };
+  }, []);
 
   // Check backend on component mount and set refresh interval
   useEffect(() => {
@@ -56,7 +56,7 @@ export const BackendStatus = () => {
     
     // Clean up interval on unmount
     return () => clearInterval(intervalId);
-  }, []);
+  }, [checkBackendHealth]);
 
   return (
     <TooltipProvider>

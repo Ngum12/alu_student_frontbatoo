@@ -2,7 +2,7 @@ import { useState } from "react";
 import ReactMarkdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { atomDark } from 'react-syntax-highlighter/dist/cjs/styles/prism';
-import { Copy, Check, Edit, Camera } from "lucide-react";
+import { Copy, Check, Edit, Camera, ThumbsUp, ThumbsDown, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
 import html2canvas from "html2canvas";
 import remarkMath from 'remark-math';
@@ -20,6 +20,7 @@ interface ChatMessageProps {
     name: string;
   }>;
   onEdit?: (newMessage: string) => void;
+  onFeedback?: (type: 'positive' | 'negative', details?: string) => void;
 }
 
 import type { ReactNode } from "react";
@@ -63,11 +64,16 @@ export const ChatMessage = ({
   message,
   isAi = false,
   attachments = [],
-  onEdit
+  onEdit,
+  onFeedback
 }: ChatMessageProps) => {
   const [copied, setCopied] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editedMessage, setEditedMessage] = useState(message);
+  const [showFeedback, setShowFeedback] = useState(false);
+  const [feedbackGiven, setFeedbackGiven] = useState(false);
+  const [feedbackDetails, setFeedbackDetails] = useState('');
+  const [showFeedbackForm, setShowFeedbackForm] = useState(false);
   const timestamp = new Date().toLocaleString('en-US', {
     hour: 'numeric',
     minute: 'numeric',
@@ -111,6 +117,96 @@ export const ChatMessage = ({
     } catch (err) {
       toast.error("Failed to take screenshot");
     }
+  };
+
+  const canShowFeedback = isAi && !feedbackGiven && localStorage.getItem('COLLECT_FEEDBACK') !== 'false';
+
+  const submitFeedback = (type: 'positive' | 'negative') => {
+    if (type === 'negative' && localStorage.getItem('DETAILED_NEGATIVE_FEEDBACK') !== 'false') {
+      setShowFeedbackForm(true);
+      return;
+    }
+
+    const feedback = JSON.parse(localStorage.getItem('FEEDBACK') || '[]');
+    feedback.push({
+      type,
+      message,
+      details: feedbackDetails,
+      timestamp: new Date().toISOString()
+    });
+    localStorage.setItem('FEEDBACK', JSON.stringify(feedback));
+
+    if (onFeedback) {
+      onFeedback(type, feedbackDetails);
+    }
+
+    setFeedbackGiven(true);
+    setShowFeedbackForm(false);
+  };
+
+  const renderFeedbackUI = () => {
+    if (!canShowFeedback) return null;
+
+    if (showFeedbackForm) {
+      return (
+        <div className="mt-3 p-3 rounded-lg bg-white/5 border border-white/10 backdrop-blur-sm">
+          <p className="text-sm text-gray-300 mb-2">What could be improved?</p>
+          <textarea
+            className="w-full p-2 rounded bg-white/10 border border-white/20 text-gray-200 text-sm mb-2"
+            placeholder="Please tell us what was incorrect or unhelpful..."
+            value={feedbackDetails}
+            onChange={(e) => setFeedbackDetails(e.target.value)}
+            rows={3}
+          />
+          <div className="flex justify-end gap-2">
+            <button 
+              className="px-3 py-1 text-sm rounded bg-white/10 hover:bg-white/20 text-gray-300"
+              onClick={() => setShowFeedbackForm(false)}
+            >
+              Cancel
+            </button>
+            <button 
+              className="px-3 py-1 text-sm rounded bg-gradient-to-tr from-[#9b87f5] to-[#8B5CF6] text-white"
+              onClick={() => submitFeedback('negative')}
+            >
+              Submit Feedback
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    if (showFeedback) {
+      return (
+        <div className="mt-2 flex space-x-2 items-center justify-end">
+          <span className="text-xs text-gray-400">Was this helpful?</span>
+          <button 
+            className="p-1 rounded hover:bg-green-500/20 text-green-400"
+            onClick={() => submitFeedback('positive')}
+          >
+            <ThumbsUp className="h-4 w-4" />
+          </button>
+          <button 
+            className="p-1 rounded hover:bg-red-500/20 text-red-400"
+            onClick={() => submitFeedback('negative')}
+          >
+            <ThumbsDown className="h-4 w-4" />
+          </button>
+        </div>
+      );
+    }
+
+    return (
+      <div className="flex justify-end mt-1">
+        <button 
+          className="text-xs text-gray-400 flex items-center hover:text-gray-300"
+          onClick={() => setShowFeedback(true)}
+        >
+          <MessageSquare className="h-3 w-3 mr-1" />
+          Feedback
+        </button>
+      </div>
+    );
   };
 
   return (
@@ -181,7 +277,7 @@ export const ChatMessage = ({
                                   {String(children).replace(/\n$/, '')}
                                 </SyntaxHighlighter>
                               </div>
-                            </div> : <code {...props} className={cn(className, "bg-[#2A2F3C] px-1.5 py-0.5 rounded-md font-mono text-sm")}>
+                            </div> : <code {...props} className={cn(className, "bg-[#2A2F2C] px-1.5 py-0.5 rounded-md font-mono text-sm")}>
                               {children}
                             </code>;
                   },
@@ -256,6 +352,64 @@ export const ChatMessage = ({
               </ReactMarkdown>
             )}
           </div>
+          
+          {renderFeedbackUI()}
+          
+          {isAi && (
+            <div className="flex items-center justify-end gap-2 mt-2">
+              <span className="text-xs text-gray-400">Was this helpful?</span>
+              <button 
+                className="p-1 rounded hover:bg-green-500/20 text-green-400"
+                onClick={() => {
+                  try {
+                    console.log("Submitting positive feedback");
+                    // Simple feedback storage
+                    const feedback = JSON.parse(localStorage.getItem('FEEDBACK') || '[]');
+                    const newFeedback = {
+                      id: Date.now().toString(),
+                      type: 'positive',
+                      message: message,
+                      timestamp: new Date().toISOString()
+                    };
+                    feedback.push(newFeedback);
+                    localStorage.setItem('FEEDBACK', JSON.stringify(feedback));
+                    console.log("Feedback saved:", newFeedback);
+                    alert("Thank you for your positive feedback!");
+                  } catch (error) {
+                    console.error("Error saving feedback:", error);
+                    alert("Could not save feedback. Please try again.");
+                  }
+                }}
+              >
+                <ThumbsUp className="h-4 w-4" />
+              </button>
+              <button 
+                className="p-1 rounded hover:bg-red-500/20 text-red-400"
+                onClick={() => {
+                  try {
+                    console.log("Submitting negative feedback");
+                    // Simple feedback storage
+                    const feedback = JSON.parse(localStorage.getItem('FEEDBACK') || '[]');
+                    const newFeedback = {
+                      id: Date.now().toString(),
+                      type: 'negative',
+                      message: message,
+                      timestamp: new Date().toISOString()
+                    };
+                    feedback.push(newFeedback);
+                    localStorage.setItem('FEEDBACK', JSON.stringify(feedback));
+                    console.log("Feedback saved:", newFeedback);
+                    alert("Thank you for your feedback. We'll work to improve this response.");
+                  } catch (error) {
+                    console.error("Error saving feedback:", error);
+                    alert("Could not save feedback. Please try again.");
+                  }
+                }}
+              >
+                <ThumbsDown className="h-4 w-4" />
+              </button>
+            </div>
+          )}
           
           <div className="text-xs text-gray-400 ml-1 flex items-center gap-2">
             <span>{timestamp}</span>
