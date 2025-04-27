@@ -34,6 +34,12 @@ function App() {
                 <Index />
               </ProtectedRoute>
             } />
+            {/* Add chatbot route - assuming Index is your chatbot page */}
+            <Route path="/chatbot" element={
+              <ProtectedRoute>
+                <Index />
+              </ProtectedRoute>
+            } />
             <Route path="/profile" element={
               <ProtectedRoute>
                 <Profile />

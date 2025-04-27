@@ -1,90 +1,130 @@
+import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { 
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged,
+  User, 
+  signInWithPopup,
+  GoogleAuthProvider,
+  updateProfile
+} from "firebase/auth";
+import { auth, googleProvider } from "@/lib/firebase";
 
-import { createContext, useContext, useState, useEffect } from "react";
-import { User, AuthState } from "@/types/auth";
-import { useNavigate } from "react-router-dom";
+type AuthContextType = {
+  currentUser: User | null;
+  signup: (email: string, password: string, name: string) => Promise<User>;
+  signupWithGoogle: () => Promise<User>;
+  login: (email: string, password: string) => Promise<User>;
+  logout: () => Promise<void>;
+  isAuthReady: boolean;
+};
 
-interface AuthContextType extends AuthState {
-  login: (email: string, password: string) => Promise<void>;
-  signup: (email: string, password: string, name: string) => Promise<void>;
-  logout: () => void;
-  updateProfile: (data: Partial<User>) => Promise<void>;
+const AuthContext = createContext<AuthContextType | null>(null);
+
+export function useAuth() {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
+  return context;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [isAuthReady, setIsAuthReady] = useState(false);
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [authState, setAuthState] = useState<AuthState>({
-    user: null,
-    isAuthenticated: false,
-  });
+  // Verify ALU email
+  const verifyAluEmail = (email: string): boolean => {
+    return email.endsWith('@alustudent.com') || email.endsWith('@alueducation.com');
+  };
 
-  useEffect(() => {
-    const savedUser = localStorage.getItem("user");
-    if (savedUser) {
-      const user = JSON.parse(savedUser);
-      setAuthState({ user, isAuthenticated: true });
+  // Email/Password signup
+  async function signup(email: string, password: string, name: string): Promise<User> {
+    // Validate ALU email
+    if (!verifyAluEmail(email)) {
+      throw new Error("Please use your ALU student or staff email");
     }
+    
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      
+      // Add display name
+      if (userCredential.user && name) {
+        await updateProfile(userCredential.user, { displayName: name });
+      }
+      
+      return userCredential.user;
+    } catch (error: any) {
+      console.error("Signup error:", error);
+      throw error;
+    }
+  }
+
+  // Google signup/login
+  async function signupWithGoogle(): Promise<User> {
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      const user = result.user;
+      
+      // Check if email is ALU email
+      if (!user.email || !verifyAluEmail(user.email)) {
+        // Sign out the user since they don't have ALU email
+        await signOut(auth);
+        throw new Error("Please use your ALU student or staff email");
+      }
+      
+      return user;
+    } catch (error: any) {
+      console.error("Google auth error:", error);
+      throw error;
+    }
+  }
+
+  // Email/Password login
+  async function login(email: string, password: string): Promise<User> {
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      return userCredential.user;
+    } catch (error: any) {
+      console.error("Login error:", error);
+      throw error;
+    }
+  }
+
+  // Logout
+  async function logout(): Promise<void> {
+    return signOut(auth);
+  }
+
+  // Effect to listen to auth state changes
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      console.log("Auth state changed:", user ? `User ${user.email} logged in` : "User logged out");
+      setCurrentUser(user);
+      setIsAuthReady(true);
+    });
+
+    return unsubscribe;
   }, []);
 
-  const login = async (email: string, password: string) => {
-    if (!email.endsWith("@alustudent.com")) {
-      throw new Error("Only @alustudent.com emails are allowed");
-    }
-    
-    // Simulate API call
-    const user: User = {
-      id: Math.random().toString(36).substr(2, 9),
-      email,
-      name: email.split("@")[0],
-      createdAt: new Date(),
-      picture: null,
-    };
-    
-    localStorage.setItem("user", JSON.stringify(user));
-    setAuthState({ user, isAuthenticated: true });
+  const value = {
+    currentUser,
+    signup,
+    signupWithGoogle,
+    login,
+    logout,
+    isAuthReady
   };
 
-  const signup = async (email: string, password: string, name: string) => {
-    if (!email.endsWith("@alustudent.com")) {
-      throw new Error("Only @alustudent.com emails are allowed");
-    }
-    
-    const user: User = {
-      id: Math.random().toString(36).substr(2, 9),
-      email,
-      name,
-      createdAt: new Date(),
-      picture: null,
-    };
-    
-    localStorage.setItem("user", JSON.stringify(user));
-    setAuthState({ user, isAuthenticated: true });
-  };
-
-  const logout = () => {
-    localStorage.removeItem("user");
-    setAuthState({ user: null, isAuthenticated: false });
-  };
-
-  const updateProfile = async (data: Partial<User>) => {
-    if (!authState.user) return;
-    
-    const updatedUser = { ...authState.user, ...data };
-    localStorage.setItem("user", JSON.stringify(updatedUser));
-    setAuthState({ user: updatedUser, isAuthenticated: true });
-  };
+  // Only render children after we've checked auth state
+  if (!isAuthReady) {
+    return <div>Loading authentication...</div>;
+  }
 
   return (
-    <AuthContext.Provider value={{ ...authState, login, signup, logout, updateProfile }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
 }
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
-  return context;
-};
