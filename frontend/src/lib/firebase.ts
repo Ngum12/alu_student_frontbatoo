@@ -4,12 +4,12 @@ import { getAuth, GoogleAuthProvider } from "firebase/auth";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyAol6UJmKpY5S4fihD1veMR-x7NE-S4SfI",
-  authDomain: "nypthoria.firebaseapp.com",
-  projectId: "nypthoria",
-  storageBucket: "nypthoria.firebasestorage.app",
-  messagingSenderId: "889533985009",
-  appId: "1:889533985009:web:6ec9a3b735426ab2917950"
+  apiKey: "AIzaSyCYczl7GoyQmAGoboMDy963_hKjQ0xejKQ",
+  authDomain: "nythorian-5a0ab.firebaseapp.com",
+  projectId: "nythorian-5a0ab",
+  storageBucket: "nythorian-5a0ab.firebasestorage.app",
+  messagingSenderId: "732854927198",
+  appId: "1:732854927198:web:f40e2172a21c55f3cfd9cf"
 };
 
 // Initialize Firebase
