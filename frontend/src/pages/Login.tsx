@@ -53,7 +53,7 @@ export default function Login() {
           navigate("/", { replace: true });
         }
       }, 750); // Increased delay to ensure auth state updates
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Error handling...
     } finally {
       setIsGoogleLoading(false);
