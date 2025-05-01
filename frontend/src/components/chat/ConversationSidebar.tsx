@@ -1,10 +1,11 @@
 import { Button } from "@/components/ui/button";
 import { Conversation } from "@/types/chat";
-import { ChevronLeft, Settings, Trash2, User, X, Database } from "lucide-react";
+import { ChevronLeft, Settings, Trash2, User, X, Database, HelpCircle, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useState } from "react";
+
 interface ConversationSidebarProps {
   conversations: Conversation[];
   currentConversationId: string;
@@ -12,6 +13,7 @@ interface ConversationSidebarProps {
   onSelectConversation: (id: string) => void;
   onDeleteConversation: (id: string) => void;
 }
+
 export const ConversationSidebar = ({
   conversations,
   currentConversationId,
@@ -20,9 +22,7 @@ export const ConversationSidebar = ({
   onDeleteConversation
 }: ConversationSidebarProps) => {
   const navigate = useNavigate();
-  const {
-    user
-  } = useAuth();
+  const { user } = useAuth();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const currentConversation = conversations.find(conv => conv.id === currentConversationId);
   const handleClearChat = () => {
@@ -48,8 +48,8 @@ export const ConversationSidebar = ({
     onDeleteConversation(convId);
   };
   const sidebarWidth = isCollapsed ? "w-16" : "w-64";
+
   return <div className={`fixed left-0 top-0 h-full ${sidebarWidth} bg-[#202123] p-2 border-r border-gray-700 flex flex-col z-50 transition-all duration-300`}>
-      
       
       <div className="absolute -right-4 top-2">
         <Button variant="ghost" size="icon" onClick={() => setIsCollapsed(!isCollapsed)} className="rounded-full bg-[#202123] hover:bg-[#40414f] w-8 h-8">
@@ -63,6 +63,40 @@ export const ConversationSidebar = ({
         <button onClick={onNewChat} className={`w-full p-3 mb-2 bg-[#40414f] hover:bg-[#4f505f] rounded-lg text-left flex items-center gap-2 ${isCollapsed ? 'justify-center' : ''}`}>
           {isCollapsed ? '+' : <span>+ New Chat</span>}
         </button>
+        
+        {/* Enhanced ALU Support Link with Logo */}
+        <a 
+          href="https://www.support.alueducation.com/home" 
+          target="_blank" 
+          rel="noopener noreferrer" 
+          className={`w-full p-3 mb-4 text-left hover:bg-[#2a2a36] bg-[#313136] transition-colors duration-200 border border-gray-600/30 rounded-lg flex items-center gap-3 ${isCollapsed ? 'justify-center' : ''}`}
+        >
+          {/* ALU Logo SVG */}
+          <div className="flex-shrink-0 w-5 h-5 relative">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+              <path 
+                d="M12 2L3 6.5V11.5L12 16L21 11.5V6.5L12 2Z" 
+                fill="#FF0033" 
+                fillOpacity="0.9"
+              />
+              <path 
+                d="M3 13.5V17.5L12 22L21 17.5V13.5L12 18L3 13.5Z" 
+                fill="#5E2D79" 
+                fillOpacity="0.9"
+              />
+            </svg>
+          </div>
+          
+          {!isCollapsed && (
+            <div className="flex items-center justify-between w-full">
+              <div className="flex items-center">
+                <span className="font-medium text-white">ALU</span>
+                <span className="ml-1 text-gray-300">Support</span>
+              </div>
+              <ExternalLink className="h-3 w-3 opacity-70" />
+            </div>
+          )}
+        </a>
 
         <div className="space-y-2">
           {conversations.map(conv => <div key={conv.id} className="group relative">
