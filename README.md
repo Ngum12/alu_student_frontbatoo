@@ -1,4 +1,6 @@
 # ALU Student Companion Deployment
+
+![Image](https://github.com/user-attachments/assets/19eeaf04-a4ed-427c-9163-8ab9fc874d8c)
 3. **Provide Feedback**: Rate answers with thumbs up/down to improve responses
 4. **Customize Settings**: Adjust the UI and chatbot behavior in Settings
 
